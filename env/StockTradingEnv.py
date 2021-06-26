@@ -129,16 +129,22 @@ class StockTradingEnv(gym.Env):
 
         return self._next_observation()
 
-    def render(self, mode='human', close=False):
-        # Render the environment to the screen
-        profit = self.net_worth - INITIAL_ACCOUNT_BALANCE
+    def render_all(self, mode='human'):
+        window_ticks = np.arange(len(self._position_history))
+        plt.plot(self.prices)
 
-        print(f'Step: {self.current_step}')
-        print(f'Balance: {self.balance}')
-        print(
-            f'Shares held: {self.shares_held} (Total sold: {self.total_shares_sold})')
-        print(
-            f'Avg cost for held shares: {self.cost_basis} (Total sales value: {self.total_sales_value})')
-        print(
-            f'Net worth: {self.net_worth} (Max net worth: {self.max_net_worth})')
-        print(f'Profit: {profit}')
+        short_ticks = []
+        long_ticks = []
+        for i, tick in enumerate(window_ticks):
+            if self._position_history[i] == Positions.Short:
+                short_ticks.append(tick)
+            elif self._position_history[i] == Positions.Long:
+                long_ticks.append(tick)
+
+        plt.plot(short_ticks, self.prices[short_ticks], 'ro')
+        plt.plot(long_ticks, self.prices[long_ticks], 'go')
+
+        plt.suptitle(
+            "Total Reward: %.6f" % self._total_reward + ' ~ ' +
+            "Total Profit: %.6f" % self._total_profit
+        )
