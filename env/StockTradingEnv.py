@@ -183,7 +183,7 @@ class StockTradingEnv(gym.Env):
         plt.scatter(hold_signals, hold_prices,color='grey', label='Hold signal')
         plt.legend()
         plt.show()
-=======
+
     def render_all(self, mode='human'):
         window_ticks = np.arange(len(self._position_history))
         plt.plot(self.prices)
