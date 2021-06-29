@@ -4,7 +4,6 @@ import gym
 from gym import spaces
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 
 MAX_ACCOUNT_BALANCE = 2147483647
 MAX_NUM_SHARES = 2147483647
@@ -19,10 +18,10 @@ class StockTradingEnv(gym.Env):
     """A stock trading environment for OpenAI gym"""
     metadata = {'render.modes': ['human']}
 
-    def __init__(self, df, frame_bound ,num_tests):
+    def __init__(self, df):
         super(StockTradingEnv, self).__init__()
 
-        self.df = df.iloc[frame_bound[0]: frame_bound[1]]
+        self.df = df
         self.reward_range = (0, MAX_ACCOUNT_BALANCE)
 
         # Actions of the format Buy x%, Sell x%, Hold, etc.
@@ -32,11 +31,6 @@ class StockTradingEnv(gym.Env):
         # Prices contains the OHCL values for the last five prices
         self.observation_space = spaces.Box(
             low=0, high=1, shape=(6, 6), dtype=np.float16)
-
-        self._position_history = []
-        self._prices = []
-        self._dates = []
-        self.num_tests = num_tests
 
     def _next_observation(self):
         # Get the stock data points for the last 5 days and scale to between 0-1
@@ -84,7 +78,6 @@ class StockTradingEnv(gym.Env):
             self.cost_basis = (
                 prev_cost + additional_cost) / (self.shares_held + shares_bought)
             self.shares_held += shares_bought
-            self._position_history.append(0)
 
         elif action_type < 2:
             # Sell amount % of shares held
@@ -93,12 +86,6 @@ class StockTradingEnv(gym.Env):
             self.shares_held -= shares_sold
             self.total_shares_sold += shares_sold
             self.total_sales_value += shares_sold * current_price
-            self._position_history.append(1)
-        else:
-            self._position_history.append(2)
-
-        self._prices.append(self.df.loc[self.current_step, "Close"])
-        self._dates.append(self.df.loc[self.current_step, "Date"])
 
         self.net_worth = self.balance + self.shares_held * current_price
 
@@ -115,9 +102,6 @@ class StockTradingEnv(gym.Env):
         self.current_step += 1
 
         if self.current_step > len(self.df.loc[:, 'Open'].values) - 6:
-            self._position_history = []
-            self._prices = []
-            self._dates = []
             self.current_step = 0
 
         delay_modifier = (self.current_step / MAX_STEPS)
@@ -140,12 +124,10 @@ class StockTradingEnv(gym.Env):
         self.total_sales_value = 0
 
         # Set the current step to a random point within the data frame
-        # self.current_step = random.randint(
-        #     0, len(self.df.loc[:, 'Open'].values) - 6)
-        self.current_step =len(self.df) - self.num_tests - 6
+        self.current_step = random.randint(
+            0, len(self.df.loc[:, 'Open'].values) - 6)
 
         return self._next_observation()
-
 
     def render(self, mode='human', close=False):
         # Render the environment to the screen
@@ -183,23 +165,3 @@ class StockTradingEnv(gym.Env):
         plt.scatter(hold_signals, hold_prices,color='grey', label='Hold signal')
         plt.legend()
         plt.show()
-
-    def render_all(self, mode='human'):
-        window_ticks = np.arange(len(self._position_history))
-        plt.plot(self.prices)
-
-        short_ticks = []
-        long_ticks = []
-        for i, tick in enumerate(window_ticks):
-            if self._position_history[i] == Positions.Short:
-                short_ticks.append(tick)
-            elif self._position_history[i] == Positions.Long:
-                long_ticks.append(tick)
-
-        plt.plot(short_ticks, self.prices[short_ticks], 'ro')
-        plt.plot(long_ticks, self.prices[long_ticks], 'go')
-
-        plt.suptitle(
-            "Total Reward: %.6f" % self._total_reward + ' ~ ' +
-            "Total Profit: %.6f" % self._total_profit
-        )
