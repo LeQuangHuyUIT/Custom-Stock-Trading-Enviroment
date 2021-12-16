@@ -100,17 +100,18 @@ class StockTradingEnv(gym.Env):
         self._take_action(action)
 
         self.current_step += 1
-
+        # print(f"current_step: {self.current_step}, len(df): {len(self.df)}")
         if self.current_step > len(self.df.loc[:, 'Open'].values) - 6:
             self.current_step = 0
-            self.done = True
+            done = True
+            # print("\t\t\tBREAK")
         else:
-            self.done = self.net_worth <= 0
+            done = self.net_worth <= 0
 
         delay_modifier = (self.current_step / MAX_STEPS)
 
         reward = self.balance * delay_modifier
-        done = self.net_worth <= 0
+        
 
         obs = self._next_observation()
 
@@ -127,6 +128,9 @@ class StockTradingEnv(gym.Env):
         self.total_sales_value = 0
 
         # Set the current step to a random point within the data frame
+        # self.current_step = random.randint(
+        #     0, len(self.df.loc[:, 'Open'].values) - 6)
+        
         self.current_step = 0
 
         return self._next_observation()
