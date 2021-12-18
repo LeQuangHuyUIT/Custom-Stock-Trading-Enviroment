@@ -36,16 +36,11 @@ class StockTradingEnv(gym.Env):
     def _next_observation(self):
         # Get the stock data points for the last 5 days and scale to between 0-1
         frame = np.array([
-            self.df.loc[self.current_step: self.current_step +
-                        self.window_size, 'Open'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        self.window_size, 'High'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        self.window_size, 'Low'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        self.window_size, 'Close'].values / MAX_SHARE_PRICE,
-            self.df.loc[self.current_step: self.current_step +
-                        self.window_size, 'Volume'].values / MAX_NUM_SHARES,
+            self.df.loc[self.current_step - self.window_size: self.current_step , 'Open'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.window_size: self.current_step , 'High'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.window_size: self.current_step , 'Low'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.window_size: self.current_step , 'Close'].values / MAX_SHARE_PRICE,
+            self.df.loc[self.current_step - self.window_size: self.current_step, 'Volume'].values / MAX_NUM_SHARES,
         ])
         obs = np.append(frame, np.array([
                     self.balance / MAX_ACCOUNT_BALANCE,
@@ -100,8 +95,8 @@ class StockTradingEnv(gym.Env):
 
         self.current_step += 1
         # print(f"current_step: {self.current_step}, len(df): {len(self.df)}")
-        if self.current_step > len(self.df) - (self.window_size + 1):
-            self.current_step = 0
+        if self.current_step >= len(self.df):
+            self.current_step = self.window_size
             done = True
             # print("\t\t\tBREAK")
         else:
@@ -109,7 +104,8 @@ class StockTradingEnv(gym.Env):
 
         delay_modifier = (self.current_step / MAX_STEPS)
 
-        reward = self.net_worth - INITIAL_ACCOUNT_BALANCE
+        reward = (self.net_worth - INITIAL_ACCOUNT_BALANCE) 
+        
         if reward != 0:
             reward /= abs(reward)
 
@@ -131,7 +127,7 @@ class StockTradingEnv(gym.Env):
         # self.current_step = random.randint(
         #     0, len(self.df.loc[:, 'Open'].values) - 6)
         
-        self.current_step = 0
+        self.current_step = self.window_size
 
         return self._next_observation()
 
