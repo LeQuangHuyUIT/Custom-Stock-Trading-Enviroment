@@ -83,15 +83,18 @@ class StockTradingEnv(gym.Env):
 
         self.net_worth = self.balance + self.shares_held * current_price
 
+        reward = self.max_net_worth - self.net_worth
         if self.net_worth > self.max_net_worth:
             self.max_net_worth = self.net_worth
 
         if self.shares_held == 0:
             self.cost_basis = 0
+           
+        return reward
 
     def step(self, action):
         # Execute one time step within the environment
-        self._take_action(action)
+        reward = self._take_action(action)
 
         self.current_step += 1
         # print(f"current_step: {self.current_step}, len(df): {len(self.df)}")
@@ -104,10 +107,10 @@ class StockTradingEnv(gym.Env):
 
         delay_modifier = (self.current_step / MAX_STEPS)
 
-        reward = (self.net_worth - INITIAL_ACCOUNT_BALANCE) 
+#         reward = (self.net_worth - INITIAL_ACCOUNT_BALANCE) 
         
-        if reward != 0:
-            reward /= abs(reward)
+#         if reward != 0:
+#             reward /= abs(reward)
 
         obs = self._next_observation()
 
