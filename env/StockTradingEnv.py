@@ -114,7 +114,8 @@ class StockTradingEnv(gym.Env):
         delay_modifier = (self.current_step / MAX_STEPS)
 
         reward = self.net_worth - INITIAL_ACCOUNT_BALANCE
-        
+        if reward != 0:
+            reward /= abs(reward)
 
         obs = self._next_observation()
 
