@@ -135,7 +135,7 @@ class StockTradingEnv(gym.Env):
         # self.current_step = random.randint(
         #     0, len(self.df.loc[:, 'Open'].values) - 6)
         
-        self.current_step = self.windown_size
+        self.current_step = self.window_size
 
         return self._next_observation()
 
