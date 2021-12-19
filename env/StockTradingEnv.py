@@ -83,7 +83,7 @@ class StockTradingEnv(gym.Env):
 
         self.net_worth = self.balance + self.shares_held * current_price
 
-        reward = self.max_net_worth - self.net_worth
+        reward = -self.max_net_worth + self.net_worth
         if self.net_worth > self.max_net_worth:
             self.max_net_worth = self.net_worth
 
