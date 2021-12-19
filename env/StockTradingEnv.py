@@ -26,12 +26,14 @@ class StockTradingEnv(gym.Env):
         self.reward_range = (0, MAX_ACCOUNT_BALANCE)
 
         # Actions of the format Buy x%, Sell x%, Hold, etc.
-        self.action_space = spaces.Box(
-            low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
+        # self.action_space = spaces.Box(
+            # low=np.array([0, 0]), high=np.array([3, 1]), dtype=np.float16)
+
+        self.action_space = spaces.Discrete(n= 3)
 
         # Prices contains the OHCL values for the last five prices
         self.observation_space = spaces.Box(
-            low=0, high=1, shape=(5, window_size+2), dtype=np.float16)
+            low=-np.inf, high=np.inf, shape=(5, window_size+2), dtype=np.float32)
 
     def _next_observation(self):
         # Get the stock data points for the last 5 days and scale to between 0-1
@@ -58,8 +60,8 @@ class StockTradingEnv(gym.Env):
         current_price = random.uniform(
             self.df.loc[self.current_step, "Open"], self.df.loc[self.current_step, "Close"])
 
-        action_type = action[0]
-        amount = action[1]
+        action_type = action
+        amount = 1
 
         if action_type < 1:
             # Buy amount % of balance in shares
@@ -156,7 +158,7 @@ def Random_games(env, visualize, test_episodes = 50, comment=""):
         state = env.reset()
         while True:
             env.render(visualize)
-            action = [np.random.randint(3, size=1)[0], np.random.rand()]
+            action = np.random.randint(3, size=1)[0]
             # print(action)
             state, reward, done,_ = env.step(action)
             # print(f"state {state.shape}")
