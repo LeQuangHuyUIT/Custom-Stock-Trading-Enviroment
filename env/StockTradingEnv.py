@@ -50,15 +50,16 @@ class StockTradingEnv(gym.Env):
                     # self.total_shares_sold / MAX_NUM_SHARES,
                     self.total_sales_value / (MAX_NUM_SHARES * MAX_SHARE_PRICE),
                 ]).reshape(-1,1), axis=1)
-
         return obs
 
     def _take_action(self, action):
         # Set the current price to a random price within the time step
+        
         current_price = random.uniform(
             self.df.loc[self.current_step, "Open"], self.df.loc[self.current_step, "Close"])
 
-        action_type = action
+        # print("action_type: ",action)
+        action_type = np.argmax(action)
 
         if action_type < 1:
             # Buy amount % of balance in shares
@@ -81,6 +82,7 @@ class StockTradingEnv(gym.Env):
             self.total_sales_value += shares_sold * current_price
 
         self.net_worth = self.balance + self.shares_held * current_price
+        self.growth_rate = (self.net_worth - self.max_net_worth)/self.max_net_worth
 
         if self.net_worth > self.max_net_worth:
             self.max_net_worth = self.net_worth
@@ -90,6 +92,7 @@ class StockTradingEnv(gym.Env):
 
     def step(self, action):
         # Execute one time step within the environment
+        prev_growth = self.growth_rate
         self._take_action(action)
 
         self.current_step += 1
@@ -103,7 +106,13 @@ class StockTradingEnv(gym.Env):
 
         delay_modifier = (self.current_step / MAX_STEPS)
 
-        reward = (self.net_worth - INITIAL_ACCOUNT_BALANCE) * (1 - (0.08/365) * (self.current_step%366))
+        # reward = (self.net_worth - INITIAL_ACCOUNT_BALANCE) * (1 - (0.08/365) * (self.current_step%366))
+        diff = self.growth_rate - prev_growth
+        if  diff <= 0:
+            self.punish -= 1
+        else:
+            self.punish += 1 
+        reward = diff + (diff+0.001)*self.punish
         
 
         obs = self._next_observation()
@@ -119,6 +128,8 @@ class StockTradingEnv(gym.Env):
         self.cost_basis = 0
         self.total_shares_sold = 0
         self.total_sales_value = 0
+        self.growth_rate = 0
+        self.punish = 0
 
         # Set the current step to a random point within the data frame
         # self.current_step = random.randint(
